@@ -8,6 +8,7 @@ import BottomOverlay from './3rdparty/walkontable/src/overlay/bottom';
 import BottomLeftCornerOverlay from './3rdparty/walkontable/src/overlay/bottomLeftCorner';
 /* eslint-enable no-unused-vars */
 
+Handsontable.proPlugins = plugins;
 Handsontable.baseVersion = process.env.HOT_BASE_VERSION;
 
 export default Handsontable;
