@@ -168,12 +168,28 @@ class ValueComponent extends BaseComponent {
    */
   reset() {
     const defaultBlankCellValue = this.hot.getTranslatedPhrase(C.FILTERS_VALUES_BLANK_CELLS);
-    const values = unifyColumnValues(this._getColumnVisibleValues());
-    const items = intersectValues(values, values, defaultBlankCellValue);
+    if (this.hot.getSettings().dynamicFilter === true) {
+      this._getColumnVisibleValuesDynamically().then(data => {
+        let values = unifyColumnValues(data.base)
+        let items = intersectValues(values, data.selected || values, defaultBlankCellValue)
+        this.getMultipleSelectElement().setItems(items);
+        super.reset();
+      })
+    } else {
+      const values = unifyColumnValues(this._getColumnVisibleValues());
+      const items = intersectValues(values, values, defaultBlankCellValue);
 
-    this.getMultipleSelectElement().setItems(items);
-    super.reset();
-    this.getMultipleSelectElement().setValue(values);
+      this.getMultipleSelectElement().setItems(items);
+      super.reset();
+      this.getMultipleSelectElement().setValue(values);
+    }
+    // const defaultBlankCellValue = this.hot.getTranslatedPhrase(C.FILTERS_VALUES_BLANK_CELLS);
+    // const values = unifyColumnValues(this._getColumnVisibleValues());
+    // const items = intersectValues(values, values, defaultBlankCellValue);
+
+    // this.getMultipleSelectElement().setItems(items);
+    // super.reset();
+    // this.getMultipleSelectElement().setValue(values);
   }
 
   /**
@@ -200,6 +216,183 @@ class ValueComponent extends BaseComponent {
     const visualIndex = lastSelectedColumn && lastSelectedColumn.visualIndex;
 
     return arrayMap(this.hot.getDataAtCol(visualIndex), v => toEmptyString(v));
+  }
+
+  /**
+   * Get data for currently selected column dynamicly
+   */
+  _getColumnVisibleValuesDynamically() {
+    return new Promise((resolve, reject) => {
+      let storePlugin = this.hot.getPlugin('StorePlugin');
+      let dynamicFilterSettings = storePlugin.dynamicFilterSettings;
+      let url = dynamicFilterSettings.getFilterOptionUrl;
+      let lastSelectAllCol = dynamicFilterSettings.selectAllCol;
+      let filteredCol = dynamicFilterSettings.filteredCol;
+
+      let filter = this.hot.getPlugin('filters');
+      let lastFilterCol = filter.lastFilterCol ? filter.lastFilterCol.visualIndex : undefined;
+      let currentSelectedCol = filter.getSelectedColumn().visualIndex;
+
+      let bodyStyle = storePlugin.style.body;
+      let checkboxCol = bodyStyle.checkboxCol || [];
+      let forbidFilterCol = bodyStyle.forbidFilterCol || [];
+      let currentColName = bodyStyle.colData[currentSelectedCol];
+      let http = storePlugin.http
+
+      let postData = {
+        _csrf: storePlugin._csrf,
+        _tabId: storePlugin.menuId,
+        filterColName: currentColName,
+        paginationOptions: storePlugin.paginationOptions
+      };
+      let temp = [];
+      let selected = [];
+
+      if (forbidFilterCol.indexOf(currentColName) !== -1) {
+        reject({
+          base: temp
+        });
+      }
+      if (checkboxCol.indexOf(currentColName) !== -1) {
+        temp = ['是', '否'];
+        resolve({
+          base: temp
+        });
+      } else if (currentColName === 'verify_state') {
+        temp = ['取消关闭', '关闭单据'];
+        resolve({
+          base: temp
+        });
+      } else if (lastFilterCol === currentSelectedCol) {
+        let all = filter.itemsSnapshotCopy;
+        let base = [];
+        let selected = [];
+        for (let i = 0; i < all.length; i++) {
+          base.push(all[i].value);
+          if (all[i].checked === true) {
+            selected.push(all[i].value);
+          }
+        }
+        resolve({
+          base: base,
+          selected: selected
+        });
+      } else if (lastFilterCol === undefined || (lastFilterCol !== undefined && lastFilterCol !== currentSelectedCol)) {
+        postData.special = false;
+        if (filteredCol && currentColName === filteredCol[filteredCol.length - 1]) {
+          postData.paginationOptions.filter[lastSelectAllCol] = undefined;
+          postData.special = true;
+        }
+        if (filteredCol && filteredCol.indexOf(currentColName) !== -1) {
+          postData.special = true;
+        }
+        http({url, data: postData}).then(res => {
+          let optionValue = res.data;
+          if (currentColName === 'state') {
+            for (let i = 0; i < optionValue.length; i++) {
+              switch (optionValue[i].data + '') {
+                case '0':
+                  optionValue[i].data = '未审核'
+                  break;
+                case '1':
+                  optionValue[i].data = '已审核'
+                  break;
+                case '2':
+                  optionValue[i].data = '已下单'
+                  break;
+                case '3':
+                  optionValue[i].data = '已提单'
+                  break;
+                case '-1':
+                  optionValue[i].data = '废除'
+                  break;
+                default:
+                  break;
+              }
+            }
+          } else if (currentColName === 'finishStatus') {
+            for (var i = 0; i < optionValue.length; i++) {
+              switch (optionValue[i].data + '') {
+                case '0':
+                  optionValue[i].data = '未收货'
+                  break;
+                case '1':
+                  optionValue[i].data = '收货中'
+                  break;
+                case '2':
+                  optionValue[i].data = '完成'
+                  break;
+                case '3':
+                  optionValue[i].data = '废除'
+                  break;
+                case '4':
+                  optionValue[i].data = '转单'
+                  break;
+                case '5':
+                  optionValue[i].data = '超单'
+                  break;
+                default:
+                  break;
+              }
+            }
+          } else if (currentColName === 'status') {
+            for (var i = 0; i < optionValue.length; i++) {
+              switch (optionValue[i].data + '') {
+                case '0':
+                  optionValue[i].data = '编辑中'
+                  break;
+                case '1':
+                  optionValue[i].data = '已保存'
+                  break;
+                case '2':
+                  optionValue[i].data = '已生成订单'
+                  break;
+                default:
+                  break;
+              }
+            }
+          } else if (currentColName === 'logistics_status') {
+            for (var i = 0; i < optionValue.length; i++) {
+              switch (optionValue[i].data + '') {
+                case '0':
+                  optionValue[i].data = '未收货';
+                  break;
+                case '1':
+                  optionValue[i].data = '收货中';
+                  break;
+                case '2':
+                  optionValue[i].data = '完成';
+                  break;
+                case '3':
+                  optionValue[i].data = '废除';
+                  break;
+                case '4':
+                  optionValue[i].data = '转单';
+                  break;
+                case '5':
+                  optionValue[i].data = '超单';
+                  break;
+                default:
+                  break;
+              }
+            }
+          }
+
+          for (let i = 0; i < optionValue.length; i++) {
+            temp.push(optionValue[i].data)
+            if (optionValue[i].selected) {
+              selected.push(optionValue[i].data)
+            }
+          }
+          resolve({
+            base: temp,
+            selected: selected
+          });
+        }, res => {
+          reject(res)
+        })
+      }
+    })
   }
 }
 
