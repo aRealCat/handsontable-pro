@@ -245,6 +245,11 @@ class ValueComponent extends BaseComponent {
         filterColName: currentColName,
         paginationOptions: storePlugin.paginationOptions
       };
+
+      if (storePlugin.dynamicFilterSettings.postData) {
+        postData = Object.assign(postData, storePlugin.dynamicFilterSettings.postData);
+      }
+
       let temp = [];
       let selected = [];
 
