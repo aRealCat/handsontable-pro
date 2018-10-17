@@ -20,8 +20,8 @@
  * RELIABILITY AND PERFORMANCE WILL MEET YOUR REQUIREMENTS OR THAT THE OPERATION OF THE SOFTWARE WILL BE
  * UNINTERRUPTED OR ERROR FREE.
  * 
- * Version: 6.0.1-2
- * Release date: 02/10/2018 (built at 11/10/2018 16:29:27)
+ * Version: 6.0.1-3
+ * Release date: 02/10/2018 (built at 17/10/2018 15:59:38)
  */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
@@ -56646,9 +56646,9 @@ Handsontable.DefaultSettings = _defaultSettings2.default;
 Handsontable.EventManager = _eventManager2.default;
 Handsontable._getListenersCounter = _eventManager.getListenersCounter; // For MemoryLeak tests
 
-Handsontable.buildDate = '11/10/2018 16:29:27';
+Handsontable.buildDate = '17/10/2018 15:59:38';
 Handsontable.packageName = 'handsontable-pro';
-Handsontable.version = '6.0.1-2';
+Handsontable.version = '6.0.1-3';
 
 var baseVersion = '6.0.1';
 
@@ -92446,180 +92446,12 @@ var ValueComponent = function (_BaseComponent) {
       var _this6 = this;
 
       return new Promise(function (resolve, reject) {
-        var storePlugin = _this6.hot.getPlugin('StorePlugin');
-        var dynamicFilterSettings = storePlugin.dynamicFilterSettings;
-        var url = dynamicFilterSettings.getFilterOptionUrl;
-        var lastSelectAllCol = dynamicFilterSettings.selectAllCol;
-        var filteredCol = dynamicFilterSettings.filteredCol;
+        _this6.hot.getSettings().getColumnVisibleValuesDynamically().then(function (_ref) {
+          var base = _ref.base,
+              selected = _ref.selected;
 
-        var filter = _this6.hot.getPlugin('filters');
-        var lastFilterCol = filter.lastFilterCol ? filter.lastFilterCol.visualIndex : undefined;
-        var currentSelectedCol = filter.getSelectedColumn().visualIndex;
-
-        var bodyStyle = storePlugin.style.body;
-        var checkboxCol = bodyStyle.checkboxCol || [];
-        var forbidFilterCol = bodyStyle.forbidFilterCol || [];
-        var currentColName = bodyStyle.colData[currentSelectedCol];
-        var http = storePlugin.http;
-
-        var postData = {
-          _csrf: storePlugin._csrf,
-          _tabId: storePlugin.menuId,
-          filterColName: currentColName,
-          paginationOptions: storePlugin.paginationOptions
-        };
-
-        if (storePlugin.dynamicFilterSettings.postData) {
-          postData = Object.assign(postData, storePlugin.dynamicFilterSettings.postData);
-        }
-
-        var temp = [];
-        var selected = [];
-
-        if (forbidFilterCol.indexOf(currentColName) !== -1) {
-          reject({
-            base: temp
-          });
-        }
-        if (checkboxCol.indexOf(currentColName) !== -1) {
-          temp = ['是', '否'];
-          resolve({
-            base: temp
-          });
-        } else if (currentColName === 'verify_state') {
-          temp = ['取消关闭', '关闭单据'];
-          resolve({
-            base: temp
-          });
-        } else if (lastFilterCol === currentSelectedCol) {
-          var all = filter.itemsSnapshotCopy;
-          var base = [];
-          var _selected = [];
-          for (var i = 0; i < all.length; i++) {
-            base.push(all[i].value);
-            if (all[i].checked === true) {
-              _selected.push(all[i].value);
-            }
-          }
-          resolve({
-            base: base,
-            selected: _selected
-          });
-        } else if (lastFilterCol === undefined || lastFilterCol !== undefined && lastFilterCol !== currentSelectedCol) {
-          postData.special = false;
-          if (filteredCol && currentColName === filteredCol[filteredCol.length - 1]) {
-            postData.paginationOptions.filter[lastSelectAllCol] = undefined;
-            postData.special = true;
-          }
-          if (filteredCol && filteredCol.indexOf(currentColName) !== -1) {
-            postData.special = true;
-          }
-          http({ url: url, data: postData }).then(function (res) {
-            var optionValue = res.data;
-            if (currentColName === 'state') {
-              for (var _i = 0; _i < optionValue.length; _i++) {
-                switch (optionValue[_i].data + '') {
-                  case '0':
-                    optionValue[_i].data = '未审核';
-                    break;
-                  case '1':
-                    optionValue[_i].data = '已审核';
-                    break;
-                  case '2':
-                    optionValue[_i].data = '已下单';
-                    break;
-                  case '3':
-                    optionValue[_i].data = '已提单';
-                    break;
-                  case '-1':
-                    optionValue[_i].data = '废除';
-                    break;
-                  default:
-                    break;
-                }
-              }
-            } else if (currentColName === 'finishStatus') {
-              for (var i = 0; i < optionValue.length; i++) {
-                switch (optionValue[i].data + '') {
-                  case '0':
-                    optionValue[i].data = '未收货';
-                    break;
-                  case '1':
-                    optionValue[i].data = '收货中';
-                    break;
-                  case '2':
-                    optionValue[i].data = '完成';
-                    break;
-                  case '3':
-                    optionValue[i].data = '废除';
-                    break;
-                  case '4':
-                    optionValue[i].data = '转单';
-                    break;
-                  case '5':
-                    optionValue[i].data = '超单';
-                    break;
-                  default:
-                    break;
-                }
-              }
-            } else if (currentColName === 'status') {
-              for (var i = 0; i < optionValue.length; i++) {
-                switch (optionValue[i].data + '') {
-                  case '0':
-                    optionValue[i].data = '编辑中';
-                    break;
-                  case '1':
-                    optionValue[i].data = '已保存';
-                    break;
-                  case '2':
-                    optionValue[i].data = '已生成订单';
-                    break;
-                  default:
-                    break;
-                }
-              }
-            } else if (currentColName === 'logistics_status') {
-              for (var i = 0; i < optionValue.length; i++) {
-                switch (optionValue[i].data + '') {
-                  case '0':
-                    optionValue[i].data = '未收货';
-                    break;
-                  case '1':
-                    optionValue[i].data = '收货中';
-                    break;
-                  case '2':
-                    optionValue[i].data = '完成';
-                    break;
-                  case '3':
-                    optionValue[i].data = '废除';
-                    break;
-                  case '4':
-                    optionValue[i].data = '转单';
-                    break;
-                  case '5':
-                    optionValue[i].data = '超单';
-                    break;
-                  default:
-                    break;
-                }
-              }
-            }
-
-            for (var _i2 = 0; _i2 < optionValue.length; _i2++) {
-              temp.push(optionValue[_i2].data);
-              if (optionValue[_i2].selected) {
-                selected.push(optionValue[_i2].data);
-              }
-            }
-            resolve({
-              base: temp,
-              selected: selected
-            });
-          }, function (res) {
-            reject(res);
-          });
-        }
+          resolve({ base: base, selected: selected });
+        });
       });
     }
   }]);
