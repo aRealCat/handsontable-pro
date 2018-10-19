@@ -20,8 +20,8 @@
  * RELIABILITY AND PERFORMANCE WILL MEET YOUR REQUIREMENTS OR THAT THE OPERATION OF THE SOFTWARE WILL BE
  * UNINTERRUPTED OR ERROR FREE.
  * 
- * Version: 6.0.1-3
- * Release date: 02/10/2018 (built at 17/10/2018 15:59:38)
+ * Version: 6.0.1-4
+ * Release date: 02/10/2018 (built at 19/10/2018 15:28:26)
  */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
@@ -34946,9 +34946,9 @@ Handsontable.DefaultSettings = _defaultSettings2.default;
 Handsontable.EventManager = _eventManager2.default;
 Handsontable._getListenersCounter = _eventManager.getListenersCounter; // For MemoryLeak tests
 
-Handsontable.buildDate = '17/10/2018 15:59:38';
+Handsontable.buildDate = '19/10/2018 15:28:26';
 Handsontable.packageName = 'handsontable-pro';
-Handsontable.version = '6.0.1-3';
+Handsontable.version = '6.0.1-4';
 
 var baseVersion = '6.0.1';
 
@@ -69614,6 +69614,27 @@ var MultipleSelectUI = function (_BaseUI) {
         });
       }
       this.itemsBox.loadData(filteredItems);
+
+      // 搜索值
+      var filteredItemsArray = [];
+      var tempItems = this.items;
+      (0, _array.arrayEach)(this.itemsBox.getSourceData(), function (row) {
+        row.checked = true;
+      });
+      this.itemsBox.render();
+      for (var i = 0; i < filteredItems.length; i++) {
+        if (filteredItems[i].checked) {
+          filteredItemsArray.push(filteredItems[i].value);
+        }
+      }
+      for (var i = 0; i < tempItems.length; i++) {
+        if (filteredItemsArray.indexOf(tempItems[i].value) === -1) {
+          tempItems[i].checked = false;
+        } else {
+          tempItems[i].checked = true;
+        }
+      }
+      this.items = tempItems;
     }
 
     /**

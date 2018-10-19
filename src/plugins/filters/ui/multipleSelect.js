@@ -227,6 +227,27 @@ class MultipleSelectUI extends BaseUI {
       filteredItems = arrayFilter(this.items, item => (`${item.value}`).toLowerCase().indexOf(value) >= 0);
     }
     this.itemsBox.loadData(filteredItems);
+
+    // 搜索值
+    var filteredItemsArray = [];
+    var tempItems = this.items;
+    arrayEach(this.itemsBox.getSourceData(), function (row) {
+      row.checked = true;
+    });
+    this.itemsBox.render();
+    for (var i = 0; i < filteredItems.length; i++) {
+      if (filteredItems[i].checked) {
+        filteredItemsArray.push(filteredItems[i].value)
+      }
+    }
+    for (var i = 0; i < tempItems.length; i++) {
+      if (filteredItemsArray.indexOf(tempItems[i].value) === -1) {
+        tempItems[i].checked = false;
+      } else {
+        tempItems[i].checked = true;
+      }
+    }
+    this.items = tempItems;
   }
 
   /**
